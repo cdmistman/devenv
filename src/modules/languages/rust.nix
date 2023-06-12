@@ -20,9 +20,9 @@ in
     components = lib.mkOption {
       # TODO: better typing here?
       type = lib.types.listOf lib.types.str;
-      defaultText = lib.literalExpression ''[ "rustc" "cargo" "rustfmt" "clippy" "rust-analyzer" ]'';
-      default = [ "rustc" "cargo" "rustfmt" "clippy" "rust-analyzer" ];
-      description = "List of rustup components to install";
+      defaultText = lib.literalExpression ''[ "rustc" "cargo" "rustfmt" "clippy" "rust-analyzer" "rust-src" ]'';
+      default = [ "rustc" "cargo" "rustfmt" "clippy" "rust-analyzer" "rust-src" ];
+      description = "List of rustup components to install.";
     };
 
     packages = lib.mkOption {
@@ -47,16 +47,22 @@ in
       description = "Attribute set of packages including rustc and Cargo.";
     };
 
+    # package = lib.mkOption {
+    #   type = lib.types.nullOr lib.types.package;
+    #   default = null;
+    #   description = "Package containing the Rust toolchain to use.";
+    # };
+
     toolchain = lib.mkOption {
       type = lib.types.nullOr (lib.types.either lib.types.attrs (lib.types.enum [ "stable" "beta" "nightly" ]));
       default = null;
-      description = "Fenix toolchain to use";
+      description = "Fenix toolchain to use.";
     };
   };
 
   config = lib.mkMerge [
     (lib.mkIf cfg.enable {
-      packages = attrValues (getAttrs cfg.components cfg.packages) ++ lib.optional pkgs.stdenv.isDarwin pkgs.libiconv;
+      packages = attrValues cfg.packages ++ lib.optional pkgs.stdenv.isDarwin pkgs.libiconv;
 
       # enable compiler tooling by default to expose things like cc
       languages.c.enable = lib.mkDefault true;
