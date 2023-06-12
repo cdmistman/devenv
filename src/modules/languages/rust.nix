@@ -47,10 +47,10 @@ in
       description = "Attribute set of packages including rustc and Cargo.";
     };
 
-    version = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
+    toolchain = lib.mkOption {
+      type = lib.types.nullOr (lib.types.either lib.types.attrs (lib.types.enum [ "stable" "beta" "nightly" ]));
       default = null;
-      description = "Set to stable, beta, or latest.";
+      description = "Fenix toolchain to use";
     };
   };
 
@@ -72,13 +72,16 @@ in
       env.RUSTDOCFLAGS = [ "-L framework=${config.env.DEVENV_PROFILE}/Library/Frameworks" ];
       env.CFLAGS = [ "-iframework ${config.env.DEVENV_PROFILE}/Library/Frameworks" ];
     })
-    (lib.mkIf (cfg.version != null) (
+    (lib.mkIf (lib.isAttrs cfg.toolchain) {
+      languages.rust.packages = cfg.toolchain.withComponents cfg.components;
+    })
+    (lib.mkIf (lib.isString cfg.toolchain) (
       let
         fenix = inputs.fenix or (throw "To use languages.rust.version, you need to add the following to your devenv.yaml:\n\n${setup}");
-        rustPackages = fenix.packages.${pkgs.stdenv.system}.${cfg.version} or (throw "languages.rust.version is set to ${cfg.version}, but should be one of: stable, beta or latest.");
+        toolchain = fenix.packages.${pkgs.stdenv.system}.${cfg.toolchain} or (throw "languages.rust.version is set to ${cfg.version}, but should be one of: stable, beta or latest.");
       in
       {
-        languages.rust.packages = genAttrs cfg.components (package: lib.mkDefault rustPackages.${package});
+        languages.rust.packages = toolchain.withComponents cfg.components;
       }
     ))
   ];
