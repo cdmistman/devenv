@@ -78,9 +78,7 @@ in
         rustPackages = fenix.packages.${pkgs.stdenv.system}.${cfg.version} or (throw "languages.rust.version is set to ${cfg.version}, but should be one of: stable, beta or latest.");
       in
       {
-        languages.rust.packages =
-          { rust-src = lib.mkDefault "${rustPackages.rust-src}/lib/rustlib/src/rust/library"; }
-          // genAttrs cfg.components (package: lib.mkDefault rustPackages.${package});
+        languages.rust.packages = genAttrs cfg.components (package: lib.mkDefault rustPackages.${package});
       }
     ))
   ];
