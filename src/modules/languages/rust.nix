@@ -87,7 +87,9 @@ in
         toolchain = fenix.packages.${pkgs.stdenv.system}.${cfg.toolchain} or (throw "languages.rust.version is set to ${cfg.version}, but should be one of: stable, beta or latest.");
       in
       {
-        languages.rust.packages = toolchain.withComponents cfg.components;
+        languages.rust.packages = [
+          (toolchain.withComponents cfg.components)
+        ];
       }
     ))
   ];
