@@ -4,7 +4,6 @@ let
   inherit (lib.attrsets) attrValues genAttrs getAttrs;
 
   cfg = config.languages.rust;
-  tools = [ "rustc" "cargo" "rustfmt" "clippy" "rust-analyzer" ];
   setup = ''
     inputs:
       fenix:
@@ -18,6 +17,13 @@ in
   options.languages.rust = {
     enable = lib.mkEnableOption "tools for Rust development";
 
+    components = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ "rustc" "cargo" "rustfmt" "clippy" "rust-analyzer" ];
+      defaultText = lib.literalExpression ''[ "rustc" "cargo" "rustfmt" "clippy" "rust-analyzer" ]'';
+      description = "Rust components to install.";
+    };
+
     packages = lib.mkOption {
       type = lib.types.submodule ({
         options = {
@@ -28,7 +34,7 @@ in
             description = "rust-src package";
           };
         }
-        // genAttrs tools (name: lib.mkOption {
+        // genAttrs cfg.components (name: lib.mkOption {
           type = lib.types.package;
           default = pkgs.${name};
           defaultText = lib.literalExpression "pkgs.${name}";
@@ -49,7 +55,7 @@ in
 
   config = lib.mkMerge [
     (lib.mkIf cfg.enable {
-      packages = attrValues (getAttrs tools cfg.packages) ++ lib.optional pkgs.stdenv.isDarwin pkgs.libiconv;
+      packages = attrValues (getAttrs cfg.components cfg.packages) ++ lib.optional pkgs.stdenv.isDarwin pkgs.libiconv;
 
       # enable compiler tooling by default to expose things like cc
       languages.c.enable = lib.mkDefault true;
@@ -73,7 +79,7 @@ in
       {
         languages.rust.packages =
           { rust-src = lib.mkDefault "${rustPackages.rust-src}/lib/rustlib/src/rust/library"; }
-          // genAttrs tools (package: lib.mkDefault rustPackages.${package});
+          // genAttrs cfg.components (package: lib.mkDefault rustPackages.${package});
       }
     ))
   ];
